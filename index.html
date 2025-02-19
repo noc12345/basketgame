@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Predictor</title>
+    <title>Smart Number Predictor</title>
 </head>
 <body>
-    <h2>Number Predictor</h2>
-    <p>Enter a number, and I'll try to guess the next one!</p>
+    <h2>Smart Number Predictor</h2>
+    <p>Enter a number, and I'll try to predict your next one!</p>
     
     <input type="number" id="userInput" placeholder="Enter a number">
     <button onclick="predictNext()">Submit</button>
@@ -21,21 +21,26 @@
             if (isNaN(input)) return;
 
             history.push(input);
-            let prediction = simpleGuess();
+            let prediction = smartGuess();
 
             document.getElementById("prediction").innerText = 
                 "My guess for the next number: " + prediction;
         }
 
-        function simpleGuess() {
-            if (history.length < 2) {
-                return Math.floor(Math.random() * 10); // Random guess if not enough data
+        function smartGuess() {
+            if (history.length < 3) {
+                return Math.floor(Math.random() * 10); // Random guess initially
             }
 
-            let last = history[history.length - 1];
-            let secondLast = history[history.length - 2];
+            let diffs = [];
+            for (let i = 1; i < history.length; i++) {
+                diffs.push(history[i] - history[i - 1]);
+            }
 
-            return last + (last - secondLast); // Basic pattern detection (e.g., arithmetic sequence)
+            let avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+            let trend = history[history.length - 1] + avgDiff;
+            
+            return Math.round(trend); // Predict based on learned pattern
         }
     </script>
 </body>
