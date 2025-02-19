@@ -15,68 +15,39 @@
 
     <script>
         let history = [];
-        let lastPattern = [];
-        let patternBroken = false;
 
         function predictNext() {
             let input = parseInt(document.getElementById("userInput").value);
             if (isNaN(input)) return;
 
             history.push(input);
-            let prediction = adaptiveGuess();
+            let prediction = advancedPatternGuess();
 
             document.getElementById("prediction").innerText = 
                 "My guess for the next number: " + prediction;
         }
 
-        function adaptiveGuess() {
-            if (history.length < 3) {
+        function advancedPatternGuess() {
+            if (history.length < 4) {
                 return Math.floor(Math.random() * 10); // Random guess initially
             }
 
             let diffs = [];
-            let ratios = [];
             for (let i = 1; i < history.length; i++) {
                 diffs.push(history[i] - history[i - 1]);
-                if (history[i - 1] !== 0) {
-                    ratios.push(history[i] / history[i - 1]);
+            }
+
+            // Detect repeating difference patterns
+            for (let len = Math.floor(diffs.length / 2); len > 0; len--) {
+                let recent = diffs.slice(-len);
+                let before = diffs.slice(-2 * len, -len);
+                if (JSON.stringify(recent) === JSON.stringify(before)) {
+                    return history[history.length - 1] + recent[0]; // Continue detected pattern
                 }
             }
 
-            let last = history[history.length - 1];
-            let predictedAdditive = last + diffs[diffs.length - 1];
-            let predictedMultiplicative = last * (ratios[ratios.length - 1] || 1);
-            
-            // Check for repeating sequences
-            let sequenceLength = Math.floor(history.length / 2);
-            for (let len = sequenceLength; len > 0; len--) {
-                let recent = history.slice(-len);
-                let before = history.slice(-2 * len, -len);
-                if (JSON.stringify(recent) === JSON.stringify(before)) {
-                    lastPattern = recent;
-                    patternBroken = false;
-                    return history[history.length - len]; // Repeat detected
-                }
-            }
-            
-            // Detect pattern breaks
-            if (lastPattern.length > 0 && JSON.stringify(lastPattern) !== JSON.stringify(history.slice(-lastPattern.length))) {
-                patternBroken = true;
-                lastPattern = [];
-            }
-            
-            if (patternBroken) {
-                // If pattern is broken, find a new pattern in the last few numbers
-                let newPatternStart = Math.max(0, history.length - 5);
-                let newPattern = history.slice(newPatternStart);
-                if (newPattern.length > 2) {
-                    lastPattern = newPattern;
-                    patternBroken = false;
-                    return newPattern[newPattern.length - 1] + (newPattern[newPattern.length - 1] - newPattern[newPattern.length - 2]);
-                }
-            }
-            
-            return Math.round((predictedAdditive + predictedMultiplicative) / 2); // Smarter blended prediction
+            // Default to using the last difference
+            return history[history.length - 1] + diffs[diffs.length - 1];
         }
     </script>
 </body>
