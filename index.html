@@ -15,19 +15,21 @@
 
     <script>
         let history = [];
+        let lastPattern = [];
+        let patternBroken = false;
 
         function predictNext() {
             let input = parseInt(document.getElementById("userInput").value);
             if (isNaN(input)) return;
 
             history.push(input);
-            let prediction = advancedGuess();
+            let prediction = adaptiveGuess();
 
             document.getElementById("prediction").innerText = 
                 "My guess for the next number: " + prediction;
         }
 
-        function advancedGuess() {
+        function adaptiveGuess() {
             if (history.length < 3) {
                 return Math.floor(Math.random() * 10); // Random guess initially
             }
@@ -51,7 +53,26 @@
                 let recent = history.slice(-len);
                 let before = history.slice(-2 * len, -len);
                 if (JSON.stringify(recent) === JSON.stringify(before)) {
+                    lastPattern = recent;
+                    patternBroken = false;
                     return history[history.length - len]; // Repeat detected
+                }
+            }
+            
+            // Detect pattern breaks
+            if (lastPattern.length > 0 && JSON.stringify(lastPattern) !== JSON.stringify(history.slice(-lastPattern.length))) {
+                patternBroken = true;
+                lastPattern = [];
+            }
+            
+            if (patternBroken) {
+                // If pattern is broken, find a new pattern in the last few numbers
+                let newPatternStart = Math.max(0, history.length - 5);
+                let newPattern = history.slice(newPatternStart);
+                if (newPattern.length > 2) {
+                    lastPattern = newPattern;
+                    patternBroken = false;
+                    return newPattern[newPattern.length - 1] + (newPattern[newPattern.length - 1] - newPattern[newPattern.length - 2]);
                 }
             }
             
