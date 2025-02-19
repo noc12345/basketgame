@@ -13,19 +13,23 @@
     <button onclick="submitChoice(2)">Paper</button>
     <button onclick="submitChoice(3)">Scissors</button>
     
-    <p id="prediction" style="display: none;"></p>
+    <p id="prediction" style="display: none;">AI's move: </p>
 
     <script>
         let history = [];
-        const choices = {1: "Rock", 2: "Paper", 3: "Scissors"};
+        let lastPrediction = null;
+        const choices = {1: "Paper", 2: "Scissors", 3: "Rocks"};
 
         function submitChoice(choice) {
-            history.push(choice);
-            let prediction = Math.max(1, Math.min(3, advancedPatternGuess()));
-            
             let predictionElement = document.getElementById("prediction");
-            predictionElement.innerText = "AI's move: " + choices[prediction];
-            predictionElement.style.display = "block";
+            
+            if (lastPrediction !== null) {
+                predictionElement.innerText = "AI's move: " + choices[lastPrediction];
+                predictionElement.style.display = "block";
+            }
+            
+            history.push(choice);
+            lastPrediction = Math.max(1, Math.min(3, advancedPatternGuess()));
         }
 
         function advancedPatternGuess() {
