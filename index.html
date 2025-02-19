@@ -3,73 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Rock Paper Scissors</title>
+    <title>Smart RPS Predictor</title>
 </head>
 <body>
-    <h2>Rock Paper Scissors - AI Learns Your Patterns</h2>
-    <p>Choose Rock, Paper, or Scissors, and the AI will try to predict your next move!</p>
+    <h2>Smart Rock-Paper-Scissors Predictor</h2>
+    <p>Choose Rock, Paper, or Scissors, and I'll try to predict your next choice!</p>
     
-    <button onclick="play('rock')">Rock</button>
-    <button onclick="play('paper')">Paper</button>
-    <button onclick="play('scissors')">Scissors</button>
+    <button onclick="submitChoice(1)">Rock</button>
+    <button onclick="submitChoice(2)">Paper</button>
+    <button onclick="submitChoice(3)">Scissors</button>
     
-    <p id="result"></p>
-    <p id="aiChoice"></p>
+    <p id="prediction"></p>
 
     <script>
         let history = [];
-        let choices = ['rock', 'paper', 'scissors'];
+        const choices = {1: "Rock", 2: "Paper", 3: "Scissors"};
 
-        function play(playerChoice) {
-            history.push(playerChoice);
-            let aiPrediction = predictNextMove();
-            let aiChoice = counterMove(aiPrediction);
+        function submitChoice(choice) {
+            history.push(choice);
+            let prediction = Math.max(1, Math.min(3, advancedPatternGuess()));
             
-            document.getElementById("aiChoice").innerText = "AI predicted: " + aiPrediction + " (Played: " + aiChoice + ")";
-            document.getElementById("result").innerText = getResult(playerChoice, aiChoice);
+            document.getElementById("prediction").innerText = 
+                "My guess for the next move: " + choices[prediction];
         }
 
-        function predictNextMove() {
-            if (history.length < 3) {
-                return choices[Math.floor(Math.random() * 3)]; // Random guess initially
+        function advancedPatternGuess() {
+            if (history.length < 4) {
+                return Math.floor(Math.random() * 3) + 1; // Random guess between 1 and 3 initially
             }
 
-            let patterns = {};
-            for (let i = 0; i < history.length - 1; i++) {
-                let key = history.slice(i).join('-');
-                patterns[key] = (patterns[key] || 0) + 1;
+            let diffs = [];
+            for (let i = 1; i < history.length; i++) {
+                diffs.push(history[i] - history[i - 1]);
             }
 
-            let lastMove = history[history.length - 1];
-            let possibleMoves = choices.map(choice => history.concat(choice).join('-'));
-            
-            let predictedMove = choices[Math.floor(Math.random() * 3)];
-            let maxCount = 0;
-            
-            for (let move of possibleMoves) {
-                if (patterns[move] > maxCount) {
-                    maxCount = patterns[move];
-                    predictedMove = move.split('-').pop();
+            // Detect repeating difference patterns
+            for (let len = Math.floor(diffs.length / 2); len > 0; len--) {
+                let recent = diffs.slice(-len);
+                let before = diffs.slice(-2 * len, -len);
+                if (JSON.stringify(recent) === JSON.stringify(before)) {
+                    return Math.max(1, Math.min(3, history[history.length - 1] + recent[0]));
                 }
             }
-            
-            return predictedMove;
-        }
 
-        function counterMove(predictedMove) {
-            if (predictedMove === 'rock') return 'paper';
-            if (predictedMove === 'paper') return 'scissors';
-            return 'rock';
-        }
-
-        function getResult(player, ai) {
-            if (player === ai) return "It's a tie!";
-            if ((player === 'rock' && ai === 'scissors') || 
-                (player === 'paper' && ai === 'rock') || 
-                (player === 'scissors' && ai === 'paper')) {
-                return "You win!";
-            }
-            return "AI wins!";
+            // Default to using the last difference
+            return Math.max(1, Math.min(3, history[history.length - 1] + diffs[diffs.length - 1]));
         }
     </script>
 </body>
