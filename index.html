@@ -3,51 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Number Predictor</title>
+    <title>Smart Rock Paper Scissors</title>
 </head>
 <body>
-    <h2>Smart Number Predictor</h2>
-    <p>Enter a number, and I'll try to predict your next one!</p>
+    <h2>Rock Paper Scissors - AI Learns Your Patterns</h2>
+    <p>Choose Rock, Paper, or Scissors, and the AI will try to predict your next move!</p>
     
-    <input type="number" id="userInput" placeholder="Enter a number">
-    <button onclick="predictNext()">Submit</button>
-    <p id="prediction"></p>
+    <button onclick="play('rock')">Rock</button>
+    <button onclick="play('paper')">Paper</button>
+    <button onclick="play('scissors')">Scissors</button>
+    
+    <p id="result"></p>
+    <p id="aiChoice"></p>
 
     <script>
         let history = [];
+        let choices = ['rock', 'paper', 'scissors'];
 
-        function predictNext() {
-            let input = parseInt(document.getElementById("userInput").value);
-            if (isNaN(input)) return;
-
-            history.push(input);
-            let prediction = advancedPatternGuess();
-
-            document.getElementById("prediction").innerText = 
-                "My guess for the next number: " + prediction;
+        function play(playerChoice) {
+            history.push(playerChoice);
+            let aiPrediction = predictNextMove();
+            let aiChoice = counterMove(aiPrediction);
+            
+            document.getElementById("aiChoice").innerText = "AI predicted: " + aiPrediction + " (Played: " + aiChoice + ")";
+            document.getElementById("result").innerText = getResult(playerChoice, aiChoice);
         }
 
-        function advancedPatternGuess() {
-            if (history.length < 4) {
-                return Math.floor(Math.random() * 10); // Random guess initially
+        function predictNextMove() {
+            if (history.length < 3) {
+                return choices[Math.floor(Math.random() * 3)]; // Random guess initially
             }
 
-            let diffs = [];
-            for (let i = 1; i < history.length; i++) {
-                diffs.push(history[i] - history[i - 1]);
+            let patterns = {};
+            for (let i = 0; i < history.length - 1; i++) {
+                let key = history.slice(i).join('-');
+                patterns[key] = (patterns[key] || 0) + 1;
             }
 
-            // Detect repeating difference patterns
-            for (let len = Math.floor(diffs.length / 2); len > 0; len--) {
-                let recent = diffs.slice(-len);
-                let before = diffs.slice(-2 * len, -len);
-                if (JSON.stringify(recent) === JSON.stringify(before)) {
-                    return history[history.length - 1] + recent[0]; // Continue detected pattern
+            let lastMove = history[history.length - 1];
+            let possibleMoves = choices.map(choice => history.concat(choice).join('-'));
+            
+            let predictedMove = choices[Math.floor(Math.random() * 3)];
+            let maxCount = 0;
+            
+            for (let move of possibleMoves) {
+                if (patterns[move] > maxCount) {
+                    maxCount = patterns[move];
+                    predictedMove = move.split('-').pop();
                 }
             }
+            
+            return predictedMove;
+        }
 
-            // Default to using the last difference
-            return history[history.length - 1] + diffs[diffs.length - 1];
+        function counterMove(predictedMove) {
+            if (predictedMove === 'rock') return 'paper';
+            if (predictedMove === 'paper') return 'scissors';
+            return 'rock';
+        }
+
+        function getResult(player, ai) {
+            if (player === ai) return "It's a tie!";
+            if ((player === 'rock' && ai === 'scissors') || 
+                (player === 'paper' && ai === 'rock') || 
+                (player === 'scissors' && ai === 'paper')) {
+                return "You win!";
+            }
+            return "AI wins!";
         }
     </script>
 </body>
