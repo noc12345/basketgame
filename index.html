@@ -1,238 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catch the Falling Objects - CRAZY MODE</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      background-color: #87CEEB;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    #game-container {
-      position: relative;
-      width: 800px;
-      height: 600px;
-      background-color: #fff;
-      border: 2px solid #000;
-      overflow: hidden;
-    }
-    #basket {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100px;
-      height: 50px;
-      background-color: #8B4513;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-    }
-    .falling-object {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      background-size: cover;
-      border-radius: 50%;
-      transition: all 0.2s ease;
-    }
-    .power-up {
-      width: 30px;
-      height: 30px;
-      background-size: cover;
-    }
-    #score {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-size: 24px;
-      color: #000;
-    }
-    #timer {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 24px;
-      color: #000;
-    }
-    #game-over {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 48px;
-      color: red;
-      text-align: center;
-    }
-    #high-score {
-      position: absolute;
-      top: 50px;
-      left: 10px;
-      font-size: 18px;
-      color: #000;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Predictor</title>
 </head>
 <body>
-  <div id="game-container">
-    <div id="basket"></div>
-    <div id="score">Score: 0</div>
-    <div id="timer">Time: 60</div>
-    <div id="high-score">High Score: 0</div>
-    <div id="game-over">Game Over!</div>
-  </div>
+    <h2>Number Predictor</h2>
+    <p>Enter a number, and I'll try to guess the next one!</p>
+    
+    <input type="number" id="userInput" placeholder="Enter a number">
+    <button onclick="predictNext()">Submit</button>
+    <p id="prediction"></p>
 
-  <script>
-    const gameContainer = document.getElementById('game-container');
-    const basket = document.getElementById('basket');
-    const scoreDisplay = document.getElementById('score');
-    const timerDisplay = document.getElementById('timer');
-    const gameOverDisplay = document.getElementById('game-over');
-    const highScoreDisplay = document.getElementById('high-score');
+    <script>
+        let history = [];
 
-    let score = 0;
-    let timeLeft = 60;
-    let highScore = localStorage.getItem('highScore') || 0;
-    let gameInterval;
-    let objectInterval;
-    let isGravityFlipped = false;
-    let isShieldActive = false;
-    let isSpeedBoostActive = false;
+        function predictNext() {
+            let input = parseInt(document.getElementById("userInput").value);
+            if (isNaN(input)) return;
 
-    highScoreDisplay.textContent = `High Score: ${highScore}`;
+            history.push(input);
+            let prediction = simpleGuess();
 
-    // Move basket with mouse
-    gameContainer.addEventListener('mousemove', (e) => {
-      const rect = gameContainer.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      basket.style.left = `${mouseX - basket.offsetWidth / 2}px`;
-    });
-
-    // Start the game
-    startGame();
-
-    function startGame() {
-      score = 0;
-      timeLeft = 60;
-      scoreDisplay.textContent = `Score: ${score}`;
-      timerDisplay.textContent = `Time: ${timeLeft}`;
-      gameOverDisplay.style.display = 'none';
-
-      // Start dropping objects
-      objectInterval = setInterval(createFallingObject, 800);
-
-      // Start timer
-      gameInterval = setInterval(() => {
-        timeLeft--;
-        timerDisplay.textContent = `Time: ${timeLeft}`;
-
-        if (timeLeft <= 0) {
-          endGame();
+            document.getElementById("prediction").innerText = 
+                "My guess for the next number: " + prediction;
         }
-      }, 1000);
-    }
 
-    function createFallingObject() {
-      const object = document.createElement('div');
-      object.classList.add('falling-object');
-      const objectType = Math.random();
-      if (objectType < 0.1) {
-        object.classList.add('power-up');
-        object.style.backgroundImage = getRandomPowerUp();
-      } else if (objectType < 0.3) {
-        object.style.backgroundImage = 'url("bomb.png")';
-      } else {
-        object.style.backgroundImage = 'url("fruit.png")';
-      }
-      object.style.left = `${Math.random() * (gameContainer.offsetWidth - 40)}px`;
-      gameContainer.appendChild(object);
-
-      let fallInterval = setInterval(() => {
-        const objectTop = object.offsetTop;
-        if (objectTop >= gameContainer.offsetHeight - 100) {
-          clearInterval(fallInterval);
-          gameContainer.removeChild(object);
-
-          // Check if the object was caught by the basket
-          const basketLeft = basket.offsetLeft;
-          const basketRight = basketLeft + basket.offsetWidth;
-          const objectLeft = object.offsetLeft;
-          const objectRight = objectLeft + object.offsetWidth;
-
-          if (objectLeft >= basketLeft && objectRight <= basketRight) {
-            if (object.classList.contains('power-up')) {
-              activatePowerUp(object.style.backgroundImage);
-            } else if (object.style.backgroundImage.includes('bomb')) {
-              if (!isShieldActive) {
-                endGame();
-              }
-            } else {
-              score++;
-              scoreDisplay.textContent = `Score: ${score}`;
-              if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('highScore', highScore);
-                highScoreDisplay.textContent = `High Score: ${highScore}`;
-              }
+        function simpleGuess() {
+            if (history.length < 2) {
+                return Math.floor(Math.random() * 10); // Random guess if not enough data
             }
-          }
-        } else {
-          object.style.top = `${objectTop + (5 + Math.floor(score / 10))}px`;
+
+            let last = history[history.length - 1];
+            let secondLast = history[history.length - 2];
+
+            return last + (last - secondLast); // Basic pattern detection (e.g., arithmetic sequence)
         }
-      }, 20);
-    }
-
-    function getRandomPowerUp() {
-      const powerUps = [
-        'url("speed.png")',
-        'url("shield.png")',
-        'url("freeze.png")',
-      ];
-      return powerUps[Math.floor(Math.random() * powerUps.length)];
-    }
-
-    function activatePowerUp(powerUp) {
-      if (powerUp.includes('speed')) {
-        isSpeedBoostActive = true;
-        basket.style.width = '150px';
-        setTimeout(() => {
-          isSpeedBoostActive = false;
-          basket.style.width = '100px';
-        }, 5000);
-      } else if (powerUp.includes('shield')) {
-        isShieldActive = true;
-        basket.style.backgroundColor = 'cyan';
-        setTimeout(() => {
-          isShieldActive = false;
-          basket.style.backgroundColor = '#8B4513';
-        }, 5000);
-      } else if (powerUp.includes('freeze')) {
-        const objects = document.querySelectorAll('.falling-object');
-        objects.forEach(obj => {
-          obj.style.transition = 'top 1s';
-          obj.style.top = `${obj.offsetTop}px`;
-        });
-        setTimeout(() => {
-          objects.forEach(obj => {
-            obj.style.transition = 'top 0.2s';
-          });
-        }, 3000);
-      }
-    }
-
-    function endGame() {
-      clearInterval(gameInterval);
-      clearInterval(objectInterval);
-      gameOverDisplay.style.display = 'block';
-      setTimeout(startGame, 3000); // Restart game after 3 seconds
-    }
-  </script>
+    </script>
 </body>
 </html>
