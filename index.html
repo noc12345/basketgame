@@ -21,20 +21,19 @@
             if (isNaN(input)) return;
 
             history.push(input);
-            let prediction = smarterGuess();
+            let prediction = advancedGuess();
 
             document.getElementById("prediction").innerText = 
                 "My guess for the next number: " + prediction;
         }
 
-        function smarterGuess() {
+        function advancedGuess() {
             if (history.length < 3) {
                 return Math.floor(Math.random() * 10); // Random guess initially
             }
 
             let diffs = [];
             let ratios = [];
-
             for (let i = 1; i < history.length; i++) {
                 diffs.push(history[i] - history[i - 1]);
                 if (history[i - 1] !== 0) {
@@ -42,14 +41,21 @@
                 }
             }
 
-            let avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
-            let avgRatio = ratios.reduce((a, b) => a + b, 0) / ratios.length;
-
             let last = history[history.length - 1];
-            let predictedAdditive = last + avgDiff;
-            let predictedMultiplicative = last * avgRatio;
-
-            return Math.round((predictedAdditive + predictedMultiplicative) / 2); // Combined prediction
+            let predictedAdditive = last + diffs[diffs.length - 1];
+            let predictedMultiplicative = last * (ratios[ratios.length - 1] || 1);
+            
+            // Check for repeating sequences
+            let sequenceLength = Math.floor(history.length / 2);
+            for (let len = sequenceLength; len > 0; len--) {
+                let recent = history.slice(-len);
+                let before = history.slice(-2 * len, -len);
+                if (JSON.stringify(recent) === JSON.stringify(before)) {
+                    return history[history.length - len]; // Repeat detected
+                }
+            }
+            
+            return Math.round((predictedAdditive + predictedMultiplicative) / 2); // Smarter blended prediction
         }
     </script>
 </body>
