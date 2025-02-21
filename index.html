@@ -3,38 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart RPS Predictor</title>
+    <title>Smart Number Predictor</title>
 </head>
 <body>
-    <h2>Smart Rock-Paper-Scissors Predictor</h2>
-    <p>Choose Rock, Paper, or Scissors, and I'll try to predict your next choice!</p>
+    <h2>Smart Number Predictor</h2>
+    <p>Enter a number, and I'll try to predict your next one!</p>
     
-    <button onclick="submitChoice(1)">Rock</button>
-    <button onclick="submitChoice(2)">Paper</button>
-    <button onclick="submitChoice(3)">Scissors</button>
-    
-    <p id="prediction" style="display: none;">AI's move: </p>
+    <input type="number" id="userInput" placeholder="Enter a number">
+    <button onclick="predictNext()">Submit</button>
+    <p id="prediction"></p>
 
     <script>
         let history = [];
-        let lastPrediction = null;
-        const choices = {1: "Paper", 2: "Scissors", 3: "Rock"};
 
-        function submitChoice(choice) {
-            let predictionElement = document.getElementById("prediction");
-            
-            if (lastPrediction !== null) {
-                predictionElement.innerText = "AI's move: " + choices[lastPrediction];
-                predictionElement.style.display = "block";
-            }
-            
-            history.push(choice);
-            lastPrediction = Math.max(1, Math.min(3, advancedPatternGuess()));
+        function predictNext() {
+            let input = parseInt(document.getElementById("userInput").value);
+            if (isNaN(input)) return;
+
+            history.push(input);
+            let prediction = advancedPatternGuess();
+
+            document.getElementById("prediction").innerText = 
+                "My guess for the next number: " + prediction;
         }
 
         function advancedPatternGuess() {
             if (history.length < 4) {
-                return Math.floor(Math.random() * 3) + 1; // Random guess between 1 and 3 initially
+                return Math.floor(Math.random() * 10); // Random guess initially
             }
 
             let diffs = [];
@@ -47,12 +42,12 @@
                 let recent = diffs.slice(-len);
                 let before = diffs.slice(-2 * len, -len);
                 if (JSON.stringify(recent) === JSON.stringify(before)) {
-                    return Math.max(1, Math.min(3, history[history.length - 1] + recent[0]));
+                    return history[history.length - 1] + recent[0]; // Continue detected pattern
                 }
             }
 
             // Default to using the last difference
-            return Math.max(1, Math.min(3, history[history.length - 1] + diffs[diffs.length - 1]));
+            return history[history.length - 1] + diffs[diffs.length - 1];
         }
     </script>
 </body>
